@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0e17">
+    <title>코인 거래량 급등 스캐너 - by 장세환</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
+            background: #0a0e17;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        /* ===== 인사말 섹션 ===== */
+        .greeting-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 23, 0.97);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease;
+        }
+        .greeting-overlay.hidden {
+            animation: fadeOut 0.5s ease forwards;
+            pointer-events: none;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        .greeting-card {
+            background: linear-gradient(135deg, #1a1f2e 0%, #141825 100%);
+            border: 1px solid #2a3040;
+            border-radius: 20px;
+            padding: 50px 45px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.6s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .greeting-card .icon-top {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+        .greeting-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .greeting-card .sub-greeting {
+            font-size: 15px;
+            color: #94a3b8;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        .profile-section {
+            background: #0f1320;
+            border: 1px solid #1e2536;
+            border-radius: 14px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: left;
+        }
+        .profile-section h3 {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+        .profile-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a2030;
+        }
+        .profile-item:last-child { border-bottom: none; }
+        .profile-item .label {
+            width: 90px;
+            font-size: 13px;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+        .profile-item .value {
+            font-size: 14px;
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+        .greeting-card .closing-msg {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 25px;
+            line-height: 1.8;
+        }
+        .btn-enter {
+            margin-top: 30px;
+            padding: 14px 50px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        .btn-enter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* ===== 메인 헤더 ===== */
+        .main-header {
+            background: linear-gradient(180deg, #111827 0%, #0a0e17 100%);
+            border-bottom: 1px solid #1e293b;
+            padding: 24px 32px 20px;
+        }
+        .main-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .main-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+        .main-header h1 span {
+            color: #3b82f6;
+        }
+        .header-right {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .header-right .status {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .sound-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* ===== 사용법 안내 ===== */
+        .guide-bar {
+            background: #111827;
+            border-bottom: 1px solid #1e293b;
+            padding: 14px 32px;
+        }
+        .guide-toggle {
+            font-size: 13px;
+            color: #3b82f6;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 500;
+        }
+        .guide-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+            padding: 0 0;
+        }
+        .guide-content.open {
+            max-height: 500px;
+            padding: 16px 0 4px;
+        }
+        .guide-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .guide-step {
+            background: #0f1629;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .guide-step .step-num {
+            display: inline-block;
+            background: #3b82f6;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .guide-step .step-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+        }
+        .guide-step .step-desc {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* ===== 설정 패널 ===== */
+        .controls {
+            background: #111827;
+            border-bottom: 1px solid #1e293b;
+            padding: 16px 32px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .control-group label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .control-group select, .control-group input {
+            background: #0a0e17;
+            border: 1px solid #1e293b;
+            color: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .control-group select:focus, .control-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Noto Sans KR', sans-serif;
+            transition: all 0.2s;
+        }
+        .btn-scan {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(34, 197, 94, 0.25);
+        }
+        .btn-scan:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35); }
+        .btn-scan:disabled { background: #1e293b; color: #475569; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-auto {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+        }
+        .btn-auto:hover { background: #334155; }
+        .btn-auto.active { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+        /* ===== 프로그레스 ===== */
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: #1e293b;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* ===== 통계 ===== */
+        .stats {
+            padding: 16px 32px;
+            display: flex;
+            gap: 32px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #1e293b;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f59e0b;
+        }
+        .stat-item .label {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        /* ===== 결과 테이블 ===== */
+        .table-container {
+            padding: 20px 32px 80px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead th {
+            background: #111827;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 2px solid #1e293b;
+            color: #64748b;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            font-size: 12px;
+        }
+        thead th:hover { color: #e2e8f0; }
+        thead th.sorted-asc::after { content: ' \u25B2'; color: #3b82f6; }
+        thead th.sorted-desc::after { content: ' \u25BC'; color: #3b82f6; }
+        tbody tr {
+            border-bottom: 1px solid #111827;
+            transition: background 0.15s;
+        }
+        tbody tr:hover { background: #111827; }
+        tbody td {
+            padding: 12px 14px;
+            white-space: nowrap;
+        }
+        .symbol-name {
+            font-weight: 700;
+            color: #3b82f6;
+            cursor: pointer;
+        }
+        .symbol-name:hover { text-decoration: underline; }
+        .vol-ratio {
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            font-size: 13px;
+        }
+        .vol-ratio.extreme { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .vol-ratio.high { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .vol-ratio.moderate { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .price-up { color: #4ade80; }
+        .price-down { color: #f87171; }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #334155;
+        }
+        .empty-state .icon { font-size: 56px; margin-bottom: 16px; }
+        .empty-state p { font-size: 15px; color: #475569; }
+        .empty-state .sub { font-size: 12px; color: #334155; margin-top: 8px; }
+
+        /* ===== 하단 상태바 ===== */
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #111827;
+            border-top: 1px solid #1e293b;
+            padding: 10px 32px;
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #1e293b;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== 반응형 (모바일) ===== */
+        @media (max-width: 768px) {
+            /* 인사말 카드 */
+            .greeting-overlay {
+                align-items: flex-start;
+                padding: 20px 12px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .greeting-card {
+                padding: 30px 20px;
+                border-radius: 16px;
+                width: 95%;
+                margin: auto;
+            }
+            .greeting-card .icon-top { font-size: 32px; margin-bottom: 14px; }
+            .greeting-card h2 { font-size: 19px; line-height: 1.5; }
+            .greeting-card .sub-greeting { font-size: 14px; margin-bottom: 20px; line-height: 1.7; }
+            .profile-section { padding: 18px 14px; margin: 18px 0; }
+            .profile-item .label { width: 70px; font-size: 12px; }
+            .profile-item .value { font-size: 13px; }
+            .greeting-card .closing-msg { font-size: 13px; }
+            .btn-enter {
+                padding: 16px 40px;
+                font-size: 16px;
+                width: 100%;
+                border-radius: 12px;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            /* 헤더 */
+            .main-header { padding: 14px 16px 12px; }
+            .main-header-top { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .main-header h1 { font-size: 17px; }
+            .header-right { gap: 10px; flex-wrap: wrap; }
+            .header-right .status { font-size: 11px; }
+            .sound-btn {
+                padding: 10px 14px;
+                font-size: 18px;
+                min-width: 44px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* 사용법 */
+            .guide-bar { padding: 12px 16px; }
+            .guide-toggle {
+                font-size: 14px;
+                padding: 8px 0;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .guide-content.open { max-height: 800px; }
+            .guide-steps { grid-template-columns: 1fr; gap: 10px; }
+            .guide-step { padding: 14px; }
+            .guide-step .step-title { font-size: 14px; }
+            .guide-step .step-desc { font-size: 12px; }
+
+            /* 설정 패널 */
+            .controls {
+                padding: 14px 16px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .control-group { width: 100%; }
+            .control-group label { font-size: 12px; margin-bottom: 4px; }
+            .control-group select, .control-group input {
+                width: 100% !important;
+                padding: 12px 14px;
+                font-size: 15px;
+                border-radius: 10px;
+                min-height: 48px;
+                -webkit-appearance: none;
+            }
+            .btn-group {
+                margin-left: 0;
+                width: 100%;
+                gap: 10px;
+            }
+            .btn {
+                flex: 1;
+                text-align: center;
+                padding: 14px 20px;
+                font-size: 15px;
+                min-height: 50px;
+                border-radius: 12px;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            /* 통계 */
+            .stats {
+                padding: 14px 16px;
+                gap: 0;
+                justify-content: space-around;
+            }
+            .stat-item .value { font-size: 22px; }
+            .stat-item .label { font-size: 10px; }
+
+            /* 테이블 */
+            .table-container { padding: 12px 10px 90px; }
+            table { font-size: 12px; }
+            thead th { padding: 10px 8px; font-size: 11px; }
+            tbody td { padding: 12px 8px; }
+            .symbol-name {
+                font-size: 13px;
+                padding: 4px 0;
+                display: inline-block;
+                min-height: 32px;
+                line-height: 32px;
+            }
+            .vol-ratio { font-size: 12px; padding: 4px 8px; }
+            /* 모바일에서 덜 중요한 컬럼 숨기기 */
+            thead th:nth-child(5),
+            thead th:nth-child(6),
+            tbody td:nth-child(5),
+            tbody td:nth-child(6) {
+                display: none;
+            }
+
+            /* 상태바 */
+            .status-bar {
+                padding: 10px 16px;
+                font-size: 11px;
+            }
+        }
+
+        /* 아주 작은 화면 (iPhone SE 등) */
+        @media (max-width: 380px) {
+            .greeting-card { padding: 24px 16px; }
+            .greeting-card h2 { font-size: 17px; }
+            .greeting-card .sub-greeting { font-size: 13px; }
+            .profile-item .label { width: 60px; font-size: 11px; }
+            .profile-item .value { font-size: 12px; }
+            .main-header h1 { font-size: 15px; }
+            .stat-item .value { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 인사말 오버레이 ===== -->
+<div class="greeting-overlay" id="greetingOverlay">
+    <div class="greeting-card">
+        <div class="icon-top">🙇</div>
+        <h2>아버님, 처음 인사드리겠습니다.</h2>
+        <p class="sub-greeting">
+            수민이 남자친구 장세환입니다.<br>
+            항상 건강하시고 좋은 일만 가득하시길 바랍니다.<br><br>
+            작은 마음이지만 아버님께 도움이 될 수 있도록<br>
+            코인 거래량 급등 종목을 실시간으로 찾아주는<br>
+            서비스를 직접 만들어 보았습니다.
+        </p>
+
+        <div class="profile-section">
+            <h3>PROFILE</h3>
+            <div class="profile-item">
+                <span class="label">이름</span>
+                <span class="value">장세환</span>
+            </div>
+            <div class="profile-item">
+                <span class="label">생년</span>
+                <span class="value">2002년생 (24세)</span>
+            </div>
+            <div class="profile-item">
+                <span class="label">학력</span>
+                <span class="value">연세대학교 토목공학과</span>
+            </div>
+            <div class="profile-item">
+                <span class="label">창업 1</span>
+                <span class="value">ATP 입시연구소 (창업 및 M&A 진행 중)</span>
+            </div>
+            <div class="profile-item">
+                <span class="label">창업 2</span>
+                <span class="value">AI CREATOBI (AI 서비스 창업)</span>
+            </div>
+        </div>
+
+        <p class="closing-msg">
+            돈은 차곡차곡 잘 모으고 있습니다.<br>
+            수민이와 함께 늘 좋은 모습 보여드리겠습니다.<br>
+            편하게 사용해 주세요!<br><br>
+            <span style="font-size:12px; color:#64748b;">
+                * 제가 개발자 출신은 아니라 혹여나 오류가 생기면<br>
+                수민이에게 말씀해 주세요! 수정해서 보내드리겠습니다.
+            </span>
+        </p>
+
+        <button class="btn-enter" onclick="closeGreeting()">서비스 시작하기</button>
+    </div>
+</div>
+
+<!-- ===== 메인 헤더 ===== -->
+<div class="main-header">
+    <div class="main-header-top">
+        <h1><span>15분봉</span> 거래량 급등 스캐너</h1>
+        <div class="header-right">
+            <span class="status" id="lastUpdate">마지막 업데이트: -</span>
+            <span class="status" id="apiStatus">API: 대기중</span>
+            <button class="sound-btn" id="soundToggle" title="알림음 ON/OFF">🔔</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 사용법 안내 ===== -->
+<div class="guide-bar">
+    <button class="guide-toggle" id="guideToggle">📖 사용법 안내 (클릭하여 열기/닫기)</button>
+    <div class="guide-content" id="guideContent">
+        <div class="guide-steps">
+            <div class="guide-step">
+                <div class="step-num">1</div>
+                <div class="step-title">스캔 시작 버튼 클릭</div>
+                <div class="step-desc">초록색 "스캔 시작" 버튼을 누르면 바이낸스에 상장된 모든 코인을 자동으로 분석합니다.</div>
+            </div>
+            <div class="guide-step">
+                <div class="step-num">2</div>
+                <div class="step-title">결과 확인</div>
+                <div class="step-desc">거래량이 평소 대비 3배 이상 터진 종목이 아래 표에 자동으로 나타납니다. 배수가 높을수록 주목!</div>
+            </div>
+            <div class="guide-step">
+                <div class="step-num">3</div>
+                <div class="step-title">종목 클릭</div>
+                <div class="step-desc">종목 이름(파란 글씨)을 클릭하면 바이낸스 거래 페이지로 바로 이동합니다.</div>
+            </div>
+            <div class="guide-step">
+                <div class="step-num">4</div>
+                <div class="step-title">자동 갱신</div>
+                <div class="step-desc">"자동 갱신" 버튼을 켜면 5분마다 자동으로 다시 스캔합니다. 켜놓고 다른 일을 해도 OK!</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 설정 ===== -->
+<div class="controls">
+    <div class="control-group">
+        <label>거래량 배수 기준</label>
+        <select id="ratioThreshold">
+            <option value="3" selected>3배 이상</option>
+            <option value="5">5배 이상</option>
+            <option value="10">10배 이상</option>
+            <option value="20">20배 이상</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>평균 비교 구간 (15분봉 기준)</label>
+        <select id="avgPeriod">
+            <option value="20" selected>최근 20개 봉 평균 (약 5시간)</option>
+            <option value="40">최근 40개 봉 평균 (약 10시간)</option>
+            <option value="96">최근 96개 봉 평균 (약 24시간)</option>
+        </select>
+    </div>
+    <div class="control-group">
+        <label>최소 거래대금 (USDT)</label>
+        <input type="number" id="minQuoteVol" value="100000" step="50000" style="width:130px;">
+    </div>
+    <div class="btn-group">
+        <button class="btn btn-scan" id="scanBtn" onclick="startScan()">스캔 시작</button>
+        <button class="btn btn-auto" id="autoBtn" onclick="toggleAuto()">자동 갱신</button>
+    </div>
+</div>
+
+<div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+
+<!-- ===== 통계 ===== -->
+<div class="stats">
+    <div class="stat-item">
+        <div class="value" id="totalSymbols">0</div>
+        <div class="label">전체 종목</div>
+    </div>
+    <div class="stat-item">
+        <div class="value" id="scannedCount">0</div>
+        <div class="label">스캔 완료</div>
+    </div>
+    <div class="stat-item">
+        <div class="value" id="detectedCount">0</div>
+        <div class="label">급등 감지</div>
+    </div>
+    <div class="stat-item">
+        <div class="value" id="scanTime">0s</div>
+        <div class="label">소요 시간</div>
+    </div>
+</div>
+
+<!-- ===== 결과 테이블 ===== -->
+<div class="table-container">
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th data-sort="symbol">종목</th>
+                <th data-sort="price">현재가 (USDT)</th>
+                <th data-sort="change">24h 변동률</th>
+                <th data-sort="ratio">거래량 배수</th>
+                <th data-sort="curVol">현재봉 거래량</th>
+                <th data-sort="avgVol">평균 거래량</th>
+                <th data-sort="quoteVol">거래대금 (USDT)</th>
+                <th>차트</th>
+            </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState">
+        <div class="icon">📊</div>
+        <p>위의 "스캔 시작" 버튼을 눌러주세요</p>
+        <p class="sub">바이낸스 USDT 마켓 전체 종목 대상 | 15분봉 기준 거래량 분석</p>
+    </div>
+</div>
+
+<!-- ===== 하단 상태바 ===== -->
+<div class="status-bar">
+    <span id="logText">준비 완료 - 스캔 시작 버튼을 눌러주세요</span>
+    <span>Made by 장세환</span>
+</div>
+
+<script>
+const BASE_URL = 'https://api.binance.com';
+let isScanning = false;
+let autoInterval = null;
+let results = [];
+let sortKey = 'ratio';
+let sortDir = 'desc';
+let soundEnabled = true;
+
+// ===== 인사말 =====
+function closeGreeting() {
+    document.getElementById('greetingOverlay').classList.add('hidden');
+    setTimeout(() => {
+        document.getElementById('greetingOverlay').style.display = 'none';
+    }, 500);
+}
+
+// ===== 사용법 토글 =====
+document.getElementById('guideToggle').addEventListener('click', () => {
+    const content = document.getElementById('guideContent');
+    content.classList.toggle('open');
+});
+
+// ===== API =====
+async function fetchJSON(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+}
+
+async function getUSDTSymbols() {
+    setLog('전체 종목 리스트 조회 중...');
+    const info = await fetchJSON(`${BASE_URL}/api/v3/exchangeInfo`);
+    return info.symbols
+        .filter(s => s.quoteAsset === 'USDT' && s.status === 'TRADING')
+        .map(s => s.symbol);
+}
+
+async function get24hTickers() {
+    const tickers = await fetchJSON(`${BASE_URL}/api/v3/ticker/24hr`);
+    const map = {};
+    tickers.forEach(t => {
+        map[t.symbol] = {
+            price: parseFloat(t.lastPrice),
+            change: parseFloat(t.priceChangePercent),
+            quoteVolume24h: parseFloat(t.quoteVolume)
+        };
+    });
+    return map;
+}
+
+async function getKlines(symbol, limit) {
+    const url = `${BASE_URL}/api/v3/klines?symbol=${symbol}&interval=15m&limit=${limit}`;
+    const data = await fetchJSON(url);
+    return data.map(k => ({
+        openTime: k[0],
+        open: parseFloat(k[1]),
+        high: parseFloat(k[2]),
+        low: parseFloat(k[3]),
+        close: parseFloat(k[4]),
+        volume: parseFloat(k[5]),
+        quoteVolume: parseFloat(k[7])
+    }));
+}
+
+// ===== 스캔 =====
+async function startScan() {
+    if (isScanning) return;
+    isScanning = true;
+
+    const scanBtn = document.getElementById('scanBtn');
+    scanBtn.disabled = true;
+    scanBtn.textContent = '스캔 중...';
+    document.getElementById('apiStatus').textContent = 'API: 연결됨';
+
+    const threshold = parseFloat(document.getElementById('ratioThreshold').value);
+    const avgPeriod = parseInt(document.getElementById('avgPeriod').value);
+    const minQuoteVol = parseFloat(document.getElementById('minQuoteVol').value);
+
+    results = [];
+    renderTable();
+    const startTime = Date.now();
+
+    try {
+        const [symbols, tickers] = await Promise.all([
+            getUSDTSymbols(),
+            get24hTickers()
+        ]);
+
+        document.getElementById('totalSymbols').textContent = symbols.length;
+        setLog(`${symbols.length}개 종목 발견. 15분봉 데이터 분석 시작...`);
+
+        const BATCH_SIZE = 10;
+        let scanned = 0;
+
+        for (let i = 0; i < symbols.length; i += BATCH_SIZE) {
+            if (!isScanning) break;
+
+            const batch = symbols.slice(i, i + BATCH_SIZE);
+            const promises = batch.map(async (symbol) => {
+                try {
+                    const klines = await getKlines(symbol, avgPeriod + 1);
+                    if (klines.length < 3) return null;
+
+                    const currentCandle = klines[klines.length - 2];
+                    const pastCandles = klines.slice(0, -2);
+                    if (pastCandles.length === 0) return null;
+
+                    const avgVolume = pastCandles.reduce((s, c) => s + c.volume, 0) / pastCandles.length;
+                    if (avgVolume === 0) return null;
+
+                    const ratio = currentCandle.volume / avgVolume;
+                    const ticker = tickers[symbol] || {};
+
+                    if (currentCandle.quoteVolume < minQuoteVol) return null;
+
+                    if (ratio >= threshold) {
+                        return {
+                            symbol,
+                            price: ticker.price || currentCandle.close,
+                            change: ticker.change || 0,
+                            ratio,
+                            curVol: currentCandle.volume,
+                            avgVol: avgVolume,
+                            quoteVol: currentCandle.quoteVolume
+                        };
+                    }
+                    return null;
+                } catch {
+                    return null;
+                }
+            });
+
+            const batchResults = await Promise.all(promises);
+            batchResults.forEach(r => { if (r) results.push(r); });
+
+            scanned += batch.length;
+            document.getElementById('scannedCount').textContent = scanned;
+            document.getElementById('detectedCount').textContent = results.length;
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('scanTime').textContent = elapsed + 's';
+            document.getElementById('progressFill').style.width = ((scanned / symbols.length) * 100) + '%';
+            setLog(`분석 중... ${scanned}/${symbols.length} (급등 감지: ${results.length}개)`);
+
+            renderTable();
+
+            if (i + BATCH_SIZE < symbols.length) {
+                await sleep(200);
+            }
+        }
+
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        document.getElementById('scanTime').textContent = totalTime + 's';
+        setLog(`스캔 완료! ${results.length}개 급등 종목 감지 (${totalTime}초 소요)`);
+
+        if (results.length > 0 && soundEnabled) playAlert();
+
+        document.getElementById('lastUpdate').textContent =
+            '마지막 업데이트: ' + new Date().toLocaleTimeString('ko-KR');
+
+    } catch (err) {
+        setLog('오류 발생: ' + err.message);
+        document.getElementById('apiStatus').textContent = 'API: 오류';
+    }
+
+    isScanning = false;
+    scanBtn.disabled = false;
+    scanBtn.textContent = '스캔 시작';
+    document.getElementById('progressFill').style.width = '100%';
+}
+
+// ===== 자동 갱신 =====
+function toggleAuto() {
+    const btn = document.getElementById('autoBtn');
+    if (autoInterval) {
+        clearInterval(autoInterval);
+        autoInterval = null;
+        btn.textContent = '자동 갱신';
+        btn.classList.remove('active');
+    } else {
+        btn.textContent = '자동 갱신 중 (5분)';
+        btn.classList.add('active');
+        startScan();
+        autoInterval = setInterval(() => {
+            if (!isScanning) startScan();
+        }, 5 * 60 * 1000);
+    }
+}
+
+// ===== 테이블 =====
+function renderTable() {
+    const tbody = document.getElementById('resultBody');
+    const empty = document.getElementById('emptyState');
+
+    if (results.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+
+    const sorted = [...results].sort((a, b) => {
+        let va = a[sortKey], vb = b[sortKey];
+        if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+        return sortDir === 'asc' ? va - vb : vb - va;
+    });
+
+    tbody.innerHTML = sorted.map(r => {
+        const changeClass = r.change >= 0 ? 'price-up' : 'price-down';
+        const changeSign = r.change >= 0 ? '+' : '';
+        let ratioClass = 'moderate';
+        if (r.ratio >= 20) ratioClass = 'extreme';
+        else if (r.ratio >= 10) ratioClass = 'high';
+
+        const displaySymbol = r.symbol.replace('USDT', '');
+        const binanceUrl = `https://www.binance.com/en/trade/${displaySymbol}_USDT`;
+
+        return `<tr>
+            <td><span class="symbol-name" onclick="window.open('${binanceUrl}','_blank')">${displaySymbol}</span></td>
+            <td>${formatPrice(r.price)}</td>
+            <td class="${changeClass}">${changeSign}${r.change.toFixed(2)}%</td>
+            <td><span class="vol-ratio ${ratioClass}">${r.ratio.toFixed(1)}x</span></td>
+            <td>${formatNumber(r.curVol)}</td>
+            <td>${formatNumber(r.avgVol)}</td>
+            <td>${formatUSDT(r.quoteVol)}</td>
+            <td><a href="${binanceUrl}" target="_blank" style="color:#3b82f6;text-decoration:none;display:inline-block;min-width:44px;min-height:44px;line-height:44px;text-align:center;font-size:18px;">📈</a></td>
+        </tr>`;
+    }).join('');
+
+    document.querySelectorAll('thead th').forEach(th => {
+        th.classList.remove('sorted-asc', 'sorted-desc');
+        if (th.dataset.sort === sortKey) {
+            th.classList.add(sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        }
+    });
+}
+
+// 정렬 클릭
+document.querySelectorAll('thead th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if (sortKey === key) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortKey = key;
+            sortDir = 'desc';
+        }
+        renderTable();
+    });
+});
+
+// ===== 유틸 =====
+function formatNumber(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toFixed(2);
+}
+
+function formatUSDT(n) {
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+    return '$' + n.toFixed(0);
+}
+
+function formatPrice(p) {
+    if (p >= 1000) return p.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    if (p >= 1) return p.toFixed(4);
+    if (p >= 0.001) return p.toFixed(6);
+    return p.toFixed(8);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function setLog(text) {
+    document.getElementById('logText').innerHTML =
+        (isScanning ? '<span class="spinner"></span>' : '') + text;
+}
+
+function playAlert() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 880; gain.gain.value = 0.3;
+        osc.start(); osc.stop(ctx.currentTime + 0.15);
+        setTimeout(() => {
+            const o2 = ctx.createOscillator();
+            const g2 = ctx.createGain();
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.frequency.value = 1100; g2.gain.value = 0.3;
+            o2.start(); o2.stop(ctx.currentTime + 0.15);
+        }, 200);
+    } catch {}
+}
+
+document.getElementById('soundToggle').addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    document.getElementById('soundToggle').textContent = soundEnabled ? '🔔' : '🔕';
+});
+</script>
+</body>
+</html>
